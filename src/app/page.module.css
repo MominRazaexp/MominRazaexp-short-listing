@@ -1,0 +1,232 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #080c10;
+}
+
+.gridBg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 160, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 160, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridPan 20s linear infinite;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
+  z-index: 0;
+}
+
+@keyframes gridPan {
+  from { background-position: 0 0; }
+  to   { background-position: 60px 60px; }
+}
+
+.orb1 {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 229, 160, 0.12) 0%, transparent 70%);
+  top: -150px;
+  left: -100px;
+  filter: blur(60px);
+  animation: orbFloat1 8s ease-in-out infinite;
+  z-index: 0;
+}
+.orb2 {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 100, 229, 0.1) 0%, transparent 70%);
+  bottom: -100px;
+  right: -80px;
+  filter: blur(80px);
+  animation: orbFloat2 10s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(30px, 20px); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(-25px, -15px); }
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  margin: 24px;
+  padding: 40px 48px;
+  text-align: center;
+  border-radius: 24px;
+  background: rgba(13, 17, 23, 0.9);
+  border: 1px solid rgba(0, 229, 160, 0.15);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 40px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(0, 229, 160, 0.08);
+  backdrop-filter: blur(24px);
+  animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 160, 0.6), transparent);
+  border-radius: 1px;
+}
+
+.logoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(0, 229, 160, 0.12);
+  border: 1px solid rgba(0, 229, 160, 0.25);
+  margin: 0 auto 28px;
+  font-size: 24px;
+  animation: fadeUp 0.6s 0.1s both;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: rgba(0, 229, 160, 0.1);
+  border: 1px solid rgba(0, 229, 160, 0.2);
+  color: #00e5a0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 30px;
+  animation: fadeUp 0.6s 0.15s both;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00e5a0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.title {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #e8edf2;
+  line-height: 1.2;
+  margin-bottom: 14px;
+  letter-spacing: -0.03em;
+  animation: fadeUp 0.6s 0.2s both;
+}
+
+.title span {
+  color: #00e5a0;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #8b9ab0;
+  margin-bottom: 40px;
+  animation: fadeUp 0.6s 0.25s both;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s 0.3s both;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+}
+
+.divider span {
+  font-size: 0.75rem;
+  color: #4a5568;
+  white-space: nowrap;
+}
+
+.googleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e8edf2;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fadeUp 0.6s 0.35s both;
+  cursor: pointer;
+}
+
+.googleButton:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(0, 229, 160, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 229, 160, 0.08);
+}
+
+.googleButton:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.footer {
+  margin-top: 28px;
+  font-size: 0.75rem;
+  color: #4a5568;
+  animation: fadeUp 0.6s 0.4s both;
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 520px) {
+  .card { padding: 40px 28px; }
+  .title { font-size: 1.8rem; }
+}

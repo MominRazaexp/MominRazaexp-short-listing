@@ -1,0 +1,19 @@
+.container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 24px;
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.description {
+  opacity: 0.8;
+  max-width: 400px;
+}
