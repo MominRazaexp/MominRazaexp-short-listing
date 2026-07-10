@@ -10,7 +10,7 @@ export const readEmailHtmlTool = new DynamicStructuredTool({
     origin: z.string().min(1),  
   }),
   func: async ({ messageId, origin }) => {
-    const { html, threadId } = await readEmailHtml(messageId, origin);
-    return { html, threadId, messageId };
+    const { html, threadId, fromHeader, attachments, subjectHeader } = await readEmailHtml(messageId, origin);
+    return { html, threadId, messageId, fromHeader, attachments, subjectHeader };
   },
 });

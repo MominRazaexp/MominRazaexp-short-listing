@@ -1,0 +1,1 @@
+export const KEYWORD_TOOLTIP = "Keywords are used to match candidates to this JD. A candidate's resume is scanned for these keywords. The JD with the matching keywords extracted from the CV will be selected.";
