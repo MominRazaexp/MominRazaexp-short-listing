@@ -13,18 +13,26 @@ export async function createTrelloCard(input: { name: string; role: string; quiz
     const { role, quizMarks, score, profile } = params;
 
     const jobUrl = profile.fullApplicationUrl || profile.jobUrl;
-    const cvUrl = profile.cvLink;
+    const emailUrl = profile.emailUrl;
+    const isDirectEmail = input.name.includes("Direct Email")
+    const cvUrl = profile.resumeUrl;
     const formattedAnswer = (profile.screenerQA?.answer || "Not Provided")
       .split("\n")
       .map((s: string) => s.trim())
       .filter(Boolean)
       .join(" | ");
+    const quizMarksField = isDirectEmail
+      ? []
+      : [`**Quiz Marks (In %):** ${quizMarks}`];
 
     return [
       `**Name:** ${score.candidate_name || "Not Provided"}`,
       `**Email:** ${score.candidate_email || "Not Provided"}`,
+      `**Phone:** ${score.candidate_phone || "Not Provided"}`,
+      `**Location:** ${score.candidate_location || "Not Provided"}`,
       `**Applied For Role:** ${role || "Not Provided"}`,
-      `**Quiz Marks (In %):** ${quizMarks}`,
+      `**Source:** ${profile.source || "Indeed"}`,
+      ...quizMarksField,
       `**AI Score (Match %):** ${Number(score.match_score || 0)}`,
       `**Reasoning:** ${score.reasoning || "Not Provided"}`,
       `**Education:** ${score.education || "Not Provided"}`,
@@ -36,18 +44,24 @@ export async function createTrelloCard(input: { name: string; role: string; quiz
       `**Marital Status:** ${score.marital_status || "Not Provided"}`,
       `**Availability:** ${profile.availability || "Not Provided"}`,
       `**Reason for Leaving:** ${profile.reasonForLeaving || "Not Provided"}`,
-      `**Commuting Issues:** ${profile.commutingIssues || "Not Provided"}`,
-      `**Interview Availability:** ${
-        profile.interviewAvailability || "Not Provided"
-      }`,
+      `**Interview Availability:** ${profile.interviewAvailability || "Not Provided"}`,
       `**Extra Skills:** ${score.extra_skills || "Not Provided"}`,
-      `**Source:** ${profile.source || "Indeed"}`,
-      `**Job URL:** ${jobUrl ? `[Click here](${jobUrl})` : "Not Provided"}`,
+      `${
+        isDirectEmail
+          ? `**Email URL:** ${
+              emailUrl ? `[Click here](${emailUrl})` : "Not Provided"
+            }`
+          : `**Job URL:** ${
+              jobUrl ? `[Click here](${jobUrl})` : "Not Provided"
+            }`
+      }`,
       `**CV Link:** ${cvUrl ? `[Click here](${cvUrl})` : "Not Provided"}`,
-      "",
-      "**Salary Question & Answer**",
-      `**Q:** ${profile.screenerQA?.question || "Not Provided"}`,
-      `**A:** ${formattedAnswer}`,
+       ...(isDirectEmail ? [] : [
+        "",
+        "**Salary Question & Answer**",
+        `**Q:** ${profile.screenerQA?.question || "Not Provided"}`,
+        `**A:** ${formattedAnswer}`,
+      ]),
     ].join("\n");
   }
 

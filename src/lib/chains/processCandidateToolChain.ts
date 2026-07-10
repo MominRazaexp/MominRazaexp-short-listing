@@ -1,5 +1,10 @@
+import { parseLushformEmailHtmlTool } from './../tools/parseLushformEmailHtmlTool';
 import { RunnableSequence } from "@langchain/core/runnables";
+import { parseDirectEmailHtmlTool } from "../tools/parseDirectEmailHtmlTool";
+import { extractAndUploadAttachmentTool } from "../tools/extractAndUploadAttachmentTool";
+import { downloadAndExtractFirebaseResumeTool } from './../tools/downloadAndExtractFirebaseResumeTool';
 import { z } from "zod";
+import { DynamicStructuredTool } from '@langchain/core/tools';
 
 import { prefer } from "@/lib/utils/merge";
 
@@ -41,20 +46,41 @@ export const processCandidateToolChain = RunnableSequence.from([
 
   
   async (ctx) => {
-    const { html } = await readEmailHtmlTool.invoke({ messageId: ctx.gmailMessageId, origin: ctx.origin });
+    const { html, fromHeader, attachments, subjectHeader } = await readEmailHtmlTool.invoke({ messageId: ctx.gmailMessageId, origin: ctx.origin });
     console.log("✅ readEmailHtmlTool completed")
-    return { ...ctx, html };
+    return { ...ctx, html, fromHeader, attachments, subjectHeader };
   },
 
 
   async (ctx) => {
-    const emailData = await parseIndeedEmailHtmlTool.invoke({ html: ctx.html });
-    console.log("✅ parseIndeedEmailHtmlTool completed")
+    const from = ctx.fromHeader || "";
+    const toolMap: {
+      condition: (from: string) => boolean;
+      tool: DynamicStructuredTool;
+    }[] = [
+      {
+        condition: (from) => from.includes("@indeedemail.com"),
+        tool: parseIndeedEmailHtmlTool,
+      },
+      {
+        condition: (from) => from.includes("brevosend"),
+        tool: parseLushformEmailHtmlTool,
+      },
+      {
+        condition: () => true,
+        tool: parseDirectEmailHtmlTool,
+      },
+    ];
+    const selected = toolMap.find(({ condition }) => condition(from));
+    const tool = selected?.tool;
+    const emailData = await tool?.invoke({ html: ctx.html });
+    console.log(`✅ ${tool?.name} completed`);
     return { ...ctx, emailData };
   },
 
 
   async (ctx) => {
+    if(ctx.emailData.source !== "Direct Email"){
     const jobTitle = (ctx.emailData as any).jobTitle || "Upwork Bidding Specialist";
     const resumeUrl = (ctx.emailData as any).resumeUrl || (ctx.emailData as any).saferedirectUrl;
 
@@ -64,23 +90,54 @@ export const processCandidateToolChain = RunnableSequence.from([
     }
 
     return { ...ctx, jobTitle, resumeUrl };
+    }
+    return ctx;
   },
 
 
   async (ctx) => {
     if (ctx.earlyExit) return ctx;
-    const pick = await decideJDTool.invoke({ jobTitleRaw: ctx.jobTitle });
+    const isEmailBasedSource = ctx.emailData.source === "Direct Email" || ctx.emailData.source === "Lushform";
+    const jobTitleRaw = isEmailBasedSource? ctx.emailData.emailBody: ctx.jobTitle;
+    const pick = await decideJDTool.invoke({ jobTitleRaw, subjectHeader: ctx.subjectHeader });
+    if(pick.role === "No role found" && pick.jd === "No jd found"){
+      console.log("⚠️ Early exit: Job not found");
+      return { ...ctx, earlyExit: { skipped: true, reason: "Job not found" } };
+    }
+
     console.log("✅ decideJDTool completed, Decided Role: ", pick.role);
-    return { ...ctx, role: pick.role, jd: pick.jd };
+    return { ...ctx, role: pick.role, jd: pick.jd, ...(isEmailBasedSource && { jobTitle: pick.role }) };
   },
 
-
+  
   async (ctx) => {
-    if (ctx.earlyExit) return ctx;
-    const resume = await downloadAndExtractResumeTool.invoke({ resumeUrl: ctx.resumeUrl });
-    console.log("✅ downloadAndExtractResumeTool completed");
+  if (ctx.earlyExit) return ctx;
+
+  const isDirectEmail = ctx.emailData?.source === "Direct Email";
+  const isLushformEmail = ctx.emailData?.source === "Lushform";
+
+  if (isDirectEmail) {
+    if (!ctx.attachments || ctx.attachments.length === 0) {
+      console.log("⚠️ Early exit: No attachments found in direct email");
+      return { ...ctx, earlyExit: { skipped: true, reason: "No attachments in direct email" } };
+    }
+    const result = await extractAndUploadAttachmentTool.invoke({
+      attachments: ctx.attachments,  gmailMessageId: ctx.gmailMessageId, origin: ctx.origin
+    });
+    console.log("✅ extractAndUploadAttachmentTool completed");
+    return { ...ctx, ...result };
+  }
+
+if (isLushformEmail) {
+    const resume = await downloadAndExtractFirebaseResumeTool.invoke({ resumeUrl: ctx.resumeUrl });
+    console.log("✅ downloadAndExtractFirebaseResumeTool completed");
     return { ...ctx, ...resume };
-  },
+  }
+
+  const resume = await downloadAndExtractResumeTool.invoke({ resumeUrl: ctx.resumeUrl });
+  console.log("✅ downloadAndExtractResumeTool completed");
+  return { ...ctx, ...resume };
+},
 
 
   async (ctx) => {
@@ -94,7 +151,11 @@ export const processCandidateToolChain = RunnableSequence.from([
       resumeMime: ctx.resumeMime || "",
       resumeDownloadFailed: !!ctx.resumeDownloadFailed,
       resumeDownloadError: ctx.resumeDownloadError || "",
+      resumeUrl: ctx.resumeUrl,
       quizMarks,
+      ...(ctx.emailData?.source === "Direct Email" && {
+        emailUrl: `https://mail.google.com/mail/u/0/#inbox/${ctx.gmailMessageId}`,
+      }),
     });
 
     profile.age = profile.age == null ? "" : String(profile.age);
@@ -112,7 +173,7 @@ export const processCandidateToolChain = RunnableSequence.from([
 
     try {
       score = await scoreCandidateTool.invoke({ jd: ctx.jd, role: ctx.role, profile: ctx.profile });
-      shortlisted = Number(score?.match_score || 0) >= 60;
+      shortlisted = Number(score?.match_score || 0) >= 60 && score?.candidate_location.toLowerCase().includes("pakistan");
       console.log("✅ scoreCandidateTool completed, Score: ", score.match_score);
     } catch (e: any) {
       console.log("❌ scoreCandidateTool failed (continuing):", e?.message || e);
@@ -147,9 +208,8 @@ export const processCandidateToolChain = RunnableSequence.from([
     if (ctx.earlyExit) return ctx;
 
     if (ctx.shortlisted && !ctx.dry && !ctx.resumeDownloadFailed) {
-      const trelloName =
-        ctx.score.title ||
-        `${ctx.score.candidate_name || "Not Provided"} - ${ctx.role} - ${ctx.profile.source || "Indeed"}`;
+      const city = ctx.score?.candidate_location?.split(",")[0]?.trim() || "";
+      const trelloName = `${ctx.score.candidate_name || "Not Provided"} - ${ctx.role} - ${ctx.profile.source || "Indeed"} - ${city}`;
 
       await createTrelloCardTool.invoke({ name: trelloName, role: ctx.role, quizMarks: ctx.quizMarks, score: ctx.score, profile: ctx.profile });
        console.log("✅ createTrelloCardTool completed");
