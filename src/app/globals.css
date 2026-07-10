@@ -48,6 +48,7 @@
 
   --modal-bg: #0d1117;
   --modal-border: rgba(255, 255, 255, 0.08);
+  --header-border: rgba(255,255,255,0.06);
 
   --input-bg: #141b24;
   --input-border: rgba(255, 255, 255, 0.1);
@@ -154,6 +155,10 @@
 
   --modal-bg: #ffffff;
   --modal-border: rgba(0, 0, 0, 0.08);
+  --section-bg: #f8fafc;
+  --section-border: #e2e8f0;
+  --header-border: #e2e8f0;
+  --jd-background: rgba(0,0,0,0.06);
 
   --input-bg: #f4f7fb;
   --input-border: rgba(0, 0, 0, 0.1);

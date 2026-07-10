@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { SideBarProps } from "@/types/types";
 import { Zap, Users, FileText, Activity, ClipboardList } from "lucide-react";
 import styles from "./SideBar.module.css";
 
-type Props = {
-  isOpen?: boolean;
-  onClose?: () => void;
-};
 
-export default function Sidebar({ isOpen = false, onClose }: Props) {
+export default function Sidebar({ isOpen = false, onClose }: SideBarProps) {
   const pathname = usePathname();
 
   useEffect(() => {

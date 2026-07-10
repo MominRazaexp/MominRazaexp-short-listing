@@ -15,4 +15,6 @@ export type ScoreOutput = {
   age?: string;
   marital_status?: string;
   extra_skills?: string;
+  candidate_location?: string;
+  candidate_phone?: string;
 };

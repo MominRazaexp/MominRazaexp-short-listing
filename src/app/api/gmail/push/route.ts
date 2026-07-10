@@ -1,74 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db/mongoose";
-import { getGmail } from "@/lib/gmail/client";
 import { GmailWatchState } from "@/lib/models/GmailWatchState";
 import { processGmailMessage } from "@/lib/gmail/processMessage";
+import { PubSubPushBody } from "@/types/types";
+import { decodePubSubData, parseAllowedFrom, getFromHeader, matchesAllowed, listNewMessageIds } from "@/lib/utils/utils";
 
 export const runtime = "nodejs";
-
-type PubSubPushBody = {
-  message?: { data?: string; messageId?: string; attributes?: Record<string, string> };
-  subscription?: string;
-};
-
-function decodePubSubData(b64: string) {
-  const json = Buffer.from(b64, "base64").toString("utf8");
-  return JSON.parse(json) as { emailAddress: string; historyId: string };
-}
-
-function parseAllowedFrom(): string[] {
-  const raw = process.env.GMAIL_ALLOWED_FROM || "";
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-async function getFromHeader(messageId: string, origin: string): Promise<string> { 
-  const gmail = await getGmail(origin);
-  const msg = await gmail.users.messages.get({
-    userId: "me",
-    id: messageId,
-    format: "metadata",
-    metadataHeaders: ["From"],
-  });
-
-  const headers = msg.data.payload?.headers || [];
-  const from = headers.find((h) => (h.name || "").toLowerCase() === "from")?.value || "";
-  return from.toLowerCase();
-}
-
-function matchesAllowed(fromHeaderLower: string, allowed: string[]) {
-
-  return allowed.some((a) => fromHeaderLower.includes(a));
-}
-
-async function listNewMessageIds(startHistoryId: string, origin: string) {
-  const gmail = await getGmail(origin);
-  const ids: string[] = [];
-  let pageToken: string | undefined;
-
-  while (true) {
-    const res = await gmail.users.history.list({
-      userId: "me",
-      startHistoryId,
-      historyTypes: ["messageAdded"],
-      labelId: "INBOX",
-      pageToken,
-    });
-
-    for (const h of res.data.history || []) {
-      for (const added of h.messagesAdded || []) {
-        if (added.message?.id) ids.push(added.message.id);
-      }
-    }
-
-    pageToken = res.data.nextPageToken || undefined;
-    if (!pageToken) break;
-  }
-
-  return Array.from(new Set(ids));
-}
 
 export async function POST(req: Request) {
   const u = new URL(req.url);
@@ -107,7 +44,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, reset: true, reason: e?.message || "history error" });
   }
 
-  const allowed = parseAllowedFrom();
   const max = Number(process.env.POLL_MAX || "10");
   const markRead = process.env.POLL_MARK_READ === "1";
 
@@ -124,14 +60,6 @@ export async function POST(req: Request) {
       if (alreadyProcessed) {
         results.push({ messageId: id, ok: false, skipped: "already processed" });
         continue;
-      }
-
-      if (allowed.length) {
-        const fromHeaderLower = await getFromHeader(id, origin);
-        if (!matchesAllowed(fromHeaderLower, allowed)) {
-          results.push({ messageId: id, ok: false, skipped: "not allowed sender" });
-          continue;
-        }
       }
 
       matched++;

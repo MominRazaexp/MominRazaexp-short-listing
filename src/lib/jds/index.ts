@@ -1,28 +1,48 @@
 import type { JDPick } from "@/types/jd";
 import { JobDescription } from "../models/JobDescription";
 
-export async function decideJD(jobTitleRaw: string): Promise<JDPick> {
-  const t = (jobTitleRaw || "").toLowerCase();
-
+export async function decideJD(jobTitleRaw: string, subjectHeader: string): Promise<JDPick> {
   const jds = await JobDescription.find({ isActive: true });
 
-  for (const jd of jds) {
-    const matched = jd.keywords.some((keyword: string) =>
-      t.includes(keyword.toLowerCase())
-    );
+  const findBestMatch = (text: string) => {
+    const t = (text || "").toLowerCase();
+    let bestMatch = null;
+    let highestMatchCount = 0;
 
-    if (matched) {
-      return {
-        role: jd.role,
-        jd: jd.jd,
-      };
+    for (const jd of jds) {
+      const matchCount = jd.keywords.filter((keyword: string) =>
+        t.includes(keyword.toLowerCase())
+      ).length;
+
+      if (matchCount > highestMatchCount) {
+        highestMatchCount = matchCount;
+        bestMatch = jd;
+      }
     }
+
+    return { bestMatch, highestMatchCount };
+  };
+
+  const { bestMatch: subjectMatch, highestMatchCount: subjectCount } = findBestMatch(subjectHeader);
+
+  if (subjectMatch && subjectCount > 0) {
+    return {
+      role: subjectMatch.role,
+      jd: subjectMatch.jd,
+    };
   }
 
-  const defaultJD = jds[0];
+  const { bestMatch: titleMatch } = findBestMatch(jobTitleRaw);
+
+  if (titleMatch) {
+    return {
+      role: titleMatch.role,
+      jd: titleMatch.jd,
+    };
+  }
 
   return {
-    role: defaultJD.role,
-    jd: defaultJD.jd,
+    role: "No role found",
+    jd: "No jd found",
   };
 }

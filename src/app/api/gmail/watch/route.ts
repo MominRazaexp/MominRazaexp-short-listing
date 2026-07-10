@@ -2,16 +2,9 @@ import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db/mongoose";
 import { getGmail } from "@/lib/gmail/client";
 import { GmailWatchState } from "@/lib/models/GmailWatchState";
+import { isAuthorized } from "@/lib/utils/utils";
 
 export const runtime = "nodejs";
-
-function isAuthorized(req: Request) {
-  const cron = process.env.CRON_SECRET || "";
-  const auth = req.headers.get("authorization") || "";
-  const bearer = auth.replace(/^Bearer\s+/i, "").trim();
-  if (!cron) return true;           // allow if not set (not recommended)
-  return bearer === cron;
-}
 
 export async function POST(req: Request) {
   const u = new URL(req.url);

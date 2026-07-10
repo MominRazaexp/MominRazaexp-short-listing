@@ -1,26 +1,18 @@
 "use client";
-import { Candidate } from "@/types/candidate";
+import { CandidateModalProps } from "@/types/types";
 import {
   Mail, User, Briefcase, Star, CheckCircle,
   Building2, Link, GraduationCap,
   Layers, Wrench, Github, ExternalLink,
-  HelpCircle, Sparkles, X, FileText, ArrowUpRight,
-  Link2,
-  LinkIcon,
-  Eye,
-  FileUser,
-  EyeIcon,
-  ScanEye,
-  LucideEye
+  HelpCircle, Sparkles, X, FileUser,
+  Check,
+  MailOpen,
+  MapPin,
+  Phone
 } from "lucide-react";
 import modalStyles from "./candidateModal.module.css";
 
-type Props = {
-  candidate: Candidate;
-  onClose: () => void;
-};
-
-export default function CandidateModal({ candidate, onClose }: Props) {
+export default function CandidateModal({ candidate, onClose }: CandidateModalProps) {
   const getInitials = (name: string) =>
     name?.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() || "?";
 
@@ -62,6 +54,15 @@ export default function CandidateModal({ candidate, onClose }: Props) {
                 </div>
               </div>
               <div className={modalStyles.infoItem}>
+                <Phone size={16} />
+                <div>
+                  <span className={modalStyles.infoLabel}>Phone</span>
+                  <span className={modalStyles.infoValue}>
+                    {candidate.score?.candidate_phone || "Not Provided"}
+                  </span>
+                </div>
+              </div>
+              <div className={modalStyles.infoItem}>
                 <Briefcase size={16} />
                 <div>
                   <span className={modalStyles.infoLabel}>Applied Role</span>
@@ -82,12 +83,21 @@ export default function CandidateModal({ candidate, onClose }: Props) {
                   <span className={modalStyles.infoValue}>{candidate.source}</span>
                 </div>
               </div>
+              {candidate.score?.candidate_location && <div className={modalStyles.infoItem}>
+                <MapPin size={16} />
+              <div>
+                <span className={modalStyles.infoLabel}>Location</span>
+                 <span className={modalStyles.infoValue}>
+                    {candidate.score.candidate_location}
+                 </span>
+               </div>
+              </div>} 
               <div className={modalStyles.infoItem}>
                 <CheckCircle size={16} />
                 <div>
                   <span className={modalStyles.infoLabel}>Status</span>
                   <span className={`${modalStyles.infoValue} ${candidate.shortlisted ? modalStyles.statusShortlisted : modalStyles.statusRejected}`}>
-                    {candidate.shortlisted ? <><CheckCircle size={13} /> Shortlisted</> : <><X size={13} /> Rejected</>}
+                    {candidate.shortlisted ? <><Check size={13} /> Shortlisted</> : <><X size={13} /> Rejected</>}
                   </span>
                 </div>
               </div>
@@ -140,11 +150,11 @@ export default function CandidateModal({ candidate, onClose }: Props) {
             </div>
           )}
 
-          {(candidate.score?.experience_years || (candidate.score?.extra_skills && candidate.score.extra_skills !== "Not Provided")) && (
+          {(candidate.score?.experience_years !== undefined || (candidate.score?.extra_skills && candidate.score.extra_skills !== "Not Provided")) && (
             <div className={modalStyles.section}>
               <h3 className={modalStyles.sectionTitle}><Wrench size={14} /> Professional Details</h3>
-              {candidate.score?.experience_years && (
-                <p className={modalStyles.inlineItem}><b>Experience:</b> {candidate.score.experience_years} Years</p>
+              {candidate.score?.experience_years !== undefined && (
+                <p className={modalStyles.inlineItem}><b>Experience:</b> {candidate.score.experience_years === 0 ? "No Experience" : `${candidate.score.experience_years} ${candidate.score.experience_years === 1 ? "Year" : "Years"}`}</p>
               )}
               {candidate.score?.extra_skills && candidate.score.extra_skills !== "Not Provided" && (
                 <p className={modalStyles.blockText}><b>Extra Skills:</b> {candidate.score.extra_skills}</p>
@@ -178,6 +188,11 @@ export default function CandidateModal({ candidate, onClose }: Props) {
           {candidate.profile?.fullApplicationUrl && (
             <a href={candidate.profile.fullApplicationUrl} target="_blank" rel="noopener noreferrer" className={modalStyles.resumeBtn}>
               <Link size={14} /> View Job
+            </a>
+          )}
+          {candidate.profile?.emailUrl && (
+            <a href={candidate.profile.emailUrl} target="_blank" rel="noopener noreferrer" className={modalStyles.resumeBtn}>
+              <MailOpen size={14} /> View Email
             </a>
           )}
         </div>
