@@ -14,6 +14,7 @@ export type CandidateProfile = {
   age?: string;
   candidate_name?: string;
   candidate_email?: string;
+  candidate_phone?: string;
 };
 
 export type Candidate = {

@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { Briefcase, Pencil, Trash2, X, AlertTriangle, Info } from "lucide-react";
 import styles from "./jdModal.module.css";
-
-const KEYWORD_TOOLTIP = "Keywords are used to match candidates to this JD. A candidate's resume is scanned for these keywords. The JD with the matching keywords extracted from the CV will be selected.";
+import { KEYWORD_TOOLTIP } from "@/lib/utils/constants";
 
 export default function JDDetailModal({ jd, onClose, onEdit, onDelete }: any) {
   const [showConfirm, setShowConfirm] = useState(false);

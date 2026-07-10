@@ -5,6 +5,6 @@ import { decideJD } from "@/lib/jds";
 export const decideJDTool = new DynamicStructuredTool({
   name: "decideJD",
   description: "Decide role and JD based on job title.",
-  schema: z.object({ jobTitleRaw: z.string().default("") }),
-  func: async ({ jobTitleRaw }) => decideJD(jobTitleRaw),
+  schema: z.object({ jobTitleRaw: z.string().default(""), subjectHeader: z.string().default("") }),
+  func: async ({ jobTitleRaw, subjectHeader }) => decideJD(jobTitleRaw, subjectHeader),
 });

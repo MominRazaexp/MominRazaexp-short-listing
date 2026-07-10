@@ -1,9 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Briefcase, Pencil, Plus, Save, X, Info } from "lucide-react";
+import { Pencil, Plus, Save, X, Info } from "lucide-react";
 import styles from "./jdModal.module.css";
-
-const KEYWORD_TOOLTIP = "Keywords are used to match candidates to this JD. A candidate's resume is scanned for these keywords. The JD with the matching keywords extracted from the CV will be selected.";
+import { KEYWORD_TOOLTIP } from "@/lib/utils/constants";
 
 export default function JDFormModal({ jd, onClose, onSuccess }: any) {
   const [role, setRole] = useState(jd?.role || "");
